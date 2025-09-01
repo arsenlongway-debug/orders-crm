@@ -1,96 +1,67 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
   <title>Orders CRM</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; }
-    header { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-    .container { padding: 16px; max-width: 960px; margin: 0 auto; }
-    .btn { padding: 10px 14px; border: 1px solid #ddd; border-radius: 10px; background: #fff; cursor: pointer; }
-    .btn.primary { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
-    .grid { display: grid; gap: 12px; }
-    .grid.cols2 { grid-template-columns: 1fr 1fr; }
-    .grid.cols3 { grid-template-columns: repeat(3, 1fr); }
-    input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; }
-    .card { border: 1px solid #eee; border-radius: 12px; padding: 16px; }
-    .items { margin-top: 8px; }
-    .muted { color: #666; font-size: 12px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #f2f2f2; }
+    .hidden { display: none; }
+    .btn { padding: 6px 12px; margin: 5px; background: #007bff; color: #fff; border: none; cursor: pointer; }
+    .btn:hover { background: #0056b3; }
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-weight: bold; }
+    input, select { width: 100%; padding: 6px; }
   </style>
 </head>
 <body>
-  <header>
-    <h3>Orders CRM</h3>
-    <button id="newBtn" class="btn primary">+ New Order</button>
-  </header>
+  <h1>Orders CRM</h1>
 
-  <div class="container">
-    <section id="listSection">
-      <h4>Orders</h4>
-      <div id="orders"></div>
-    </section>
+  <!-- список -->
+  <div id="listSection">
+    <button id="newBtn" class="btn">+ New Order</button>
+    <div id="orders"></div>
+  </div>
 
-    <section id="formSection" style="display:none;">
-      <h4>Create Order</h4>
-      <div class="card">
-        <div class="grid cols3">
-          <div><label>Client</label><input id="client" /></div>
-          <div>
-            <label>Status</label>
-            <select id="status">
-              <option>New</option><option>In progress</option>
-              <option>Production</option><option>Shipped</option>
-              <option>Closed</option><option>Cancelled</option>
-            </select>
-          </div>
-          <div>
-            <label>Currency</label>
-            <select id="currency"><option>CNY</option><option>USD</option><option>RUB</option><option>EUR</option></select>
-          </div>
-        </div>
-        <div class="grid cols2" style="margin-top:12px;">
-          <div><label>Payment Terms</label><input id="payment_terms" placeholder="60% prepayment, 40% before shipment" /></div>
-          <div><label>Logistics</label><input id="logistics" placeholder="FOB Shanghai / DAP Moscow, tracking..." /></div>
-        </div>
-        <div class="grid cols3" style="margin-top:12px;">
-          <div><label>Planned start</label><input type="date" id="planned_start" /></div>
-          <div><label>Planned end</label><input type="date" id="planned_end" /></div>
-          <div><label>Actual ship</label><input type="date" id="actual_ship" /></div>
-        </div>
-        <div class="grid cols3" style="margin-top:12px;">
-          <div><label>Order Discount %</label><input id="discount_percent" type="number" value="0" /></div>
-          <div><label>Extra Costs</label><input id="extra_costs" type="number" value="0" /></div>
-        </div>
-      </div>
+  <!-- форма -->
+  <div id="formSection" class="hidden">
+    <div class="form-group"><label>Client</label><input id="client" /></div>
+    <div class="form-group"><label>Status</label>
+      <select id="status">
+        <option>New</option><option>In Progress</option><option>Completed</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Currency</label><input id="currency" value="CNY"/></div>
+    <div class="form-group"><label>Payment Terms</label><input id="payment_terms"/></div>
+    <div class="form-group"><label>Logistics</label><input id="logistics"/></div>
+    <div class="form-group"><label>Planned Start</label><input id="planned_start" type="date"/></div>
+    <div class="form-group"><label>Planned End</label><input id="planned_end" type="date"/></div>
+    <div class="form-group"><label>Actual Ship</label><input id="actual_ship" type="date"/></div>
+    <div class="form-group"><label>Discount %</label><input id="discount_percent" type="number" value="0"/></div>
+    <div class="form-group"><label>Extra Costs</label><input id="extra_costs" type="number" value="0"/></div>
 
-      <div class="card items">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h4 style="margin:0;">Items</h4>
-          <button class="btn" id="addItem">+ Add item</button>
-        </div>
-        <table id="itemsTable">
-          <thead>
-            <tr>
-              <th>Product</th><th>SKU</th><th>Color</th><th>Size</th>
-              <th>Qty</th><th>Cost</th><th>Price</th><th>Disc %</th><th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div class="muted">Totals auto-calculate on submit.</div>
-      </div>
+    <h3>Items</h3>
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th>Product</th><th>SKU</th><th>Color</th><th>Size</th>
+          <th>Qty</th><th>Cost</th><th>Price</th><th>Disc%</th><th></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button id="addItem" class="btn">+ Add Item</button><br/>
 
-      <div style="margin-top:12px;">
-        <button class="btn" id="cancelBtn">Cancel</button>
-        <button class="btn primary" id="saveBtn">Save Order</button>
-      </div>
-    </section>
+    <button id="saveBtn" class="btn">Save Order</button>
+    <button id="cancelBtn" class="btn" style="background:#6c757d">Cancel</button>
   </div>
 
   <script>
+    // --- состояние
+    let editingId = null; // если null — создаём новый, если число — редактируем существующий
+
     const listSection = document.getElementById('listSection');
     const formSection = document.getElementById('formSection');
     const ordersDiv = document.getElementById('orders');
@@ -117,40 +88,8 @@
       return tr;
     }
 
-    async function loadOrders() {
-      const res = await fetch('/api/orders');
-      const data = await res.json();
-      ordersDiv.innerHTML = `
-        <table>
-          <thead><tr><th>#</th><th>Client</th><th>Status</th><th>Currency</th><th>Total</th><th>GP</th><th>Date</th></tr></thead>
-          <tbody>
-            ${data.map(o => `
-              <tr>
-                <td>${o.order_number}</td>
-                <td>${o.client||''}</td>
-                <td>${o.status||''}</td>
-                <td>${o.currency||''}</td>
-                <td>${(o.total_sale||0).toFixed(2)}</td>
-                <td>${(o.gross_profit||0).toFixed(2)}</td>
-                <td>${new Date(o.created_at).toLocaleString()}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    }
-
-    function showForm(show) {
-      listSection.style.display = show ? 'none' : 'block';
-      formSection.style.display = show ? 'block' : 'none';
-    }
-
-    newBtn.onclick = () => { showForm(true); itemsTbody.innerHTML=''; addItemBtn.click(); };
-    cancelBtn.onclick = () => showForm(false);
-    addItemBtn.onclick = () => itemsTbody.appendChild(row());
-
-    saveBtn.onclick = async () => {
-      const payload = {
+    function getFormPayload() {
+      return {
         client: document.getElementById('client').value,
         status: document.getElementById('status').value,
         currency: document.getElementById('currency').value,
@@ -175,18 +114,112 @@
           }
         })
       };
-      const res = await fetch('/api/orders', {
-        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    }
+
+    function clearForm() {
+      editingId = null;
+      document.getElementById('client').value = '';
+      document.getElementById('status').value = 'New';
+      document.getElementById('currency').value = 'CNY';
+      document.getElementById('payment_terms').value = '';
+      document.getElementById('logistics').value = '';
+      document.getElementById('planned_start').value = '';
+      document.getElementById('planned_end').value = '';
+      document.getElementById('actual_ship').value = '';
+      document.getElementById('discount_percent').value = '0';
+      document.getElementById('extra_costs').value = '0';
+      itemsTbody.innerHTML = '';
+      saveBtn.textContent = 'Save Order';
+    }
+
+    function fillForm(order) {
+      editingId = order.id;
+      document.getElementById('client').value = order.client || '';
+      document.getElementById('status').value = order.status || 'New';
+      document.getElementById('currency').value = order.currency || 'CNY';
+      document.getElementById('payment_terms').value = order.payment_terms || '';
+      document.getElementById('logistics').value = order.logistics || '';
+      document.getElementById('planned_start').value = order.planned_start || '';
+      document.getElementById('planned_end').value = order.planned_end || '';
+      document.getElementById('actual_ship').value = order.actual_ship || '';
+      document.getElementById('discount_percent').value = order.discount_percent ?? 0;
+      document.getElementById('extra_costs').value = order.extra_costs ?? 0;
+      itemsTbody.innerHTML = '';
+      (order.items || []).forEach(it => itemsTbody.appendChild(row(it)));
+      if ((order.items || []).length === 0) itemsTbody.appendChild(row());
+      saveBtn.textContent = 'Save Changes';
+    }
+
+    async function loadOrders() {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      ordersDiv.innerHTML = `
+        <table>
+          <thead><tr><th>#</th><th>Client</th><th>Status</th><th>Currency</th><th>Total</th><th>GP</th><th>Date</th></tr></thead>
+          <tbody>
+            ${data.map(o => `
+              <tr data-id="${o.id}" style="cursor:pointer">
+                <td>${o.order_number}</td>
+                <td>${o.client||''}</td>
+                <td>${o.status||''}</td>
+                <td>${o.currency||''}</td>
+                <td>${(o.total_sale||0).toFixed(2)}</td>
+                <td>${(o.gross_profit||0).toFixed(2)}</td>
+                <td>${new Date(o.created_at).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // клики по строкам — открыть на редактирование
+      ordersDiv.querySelectorAll('tbody tr').forEach(tr => {
+        tr.addEventListener('click', async () => {
+          const id = tr.getAttribute('data-id');
+          const r = await fetch(`/api/orders/${id}`);
+          if (!r.ok) { alert('Order not found'); return; }
+          const full = await r.json();
+          fillForm(full);
+          showForm(true);
+        });
       });
+    }
+
+    function showForm(show) {
+      listSection.style.display = show ? 'none' : 'block';
+      formSection.style.display = show ? 'block' : 'none';
+    }
+
+    newBtn.onclick = () => { clearForm(); showForm(true); itemsTbody.innerHTML=''; addItemBtn.click(); };
+    cancelBtn.onclick = () => { clearForm(); showForm(false); };
+
+    addItemBtn.onclick = () => itemsTbody.appendChild(row());
+
+    saveBtn.onclick = async () => {
+      const payload = getFormPayload();
+
+      // если редактируем — PUT, если создаём — POST
+      const url = editingId ? `/api/orders/${editingId}` : '/api/orders';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+
       if (res.ok) {
         showForm(false);
+        clearForm();
         await loadOrders();
-        alert('Order saved');
+        alert(editingId ? 'Order updated' : 'Order saved');
       } else {
-        alert('Error saving order');
+        const t = await res.text().catch(()=> '');
+        alert('Error: ' + t);
       }
     };
 
+    // первичная загрузка
     loadOrders();
   </script>
 </body>

@@ -11,7 +11,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Подключаем базу
+// ===== DB =====
 const db = new sqlite3.Database("./orders.db");
 
 db.serialize(() => {
@@ -55,7 +55,7 @@ db.serialize(() => {
   `);
 });
 
-// генерация номера заказа ORD-YYYYMM-#### 
+// генерация номера ORD-YYYYMM-####
 function generateOrderNumber(cb) {
   const now = new Date();
   const y = now.getFullYear();
@@ -117,7 +117,7 @@ app.post("/api/orders", (req, res) => {
     items = [],
   } = req.body;
 
-  // считаем итоги
+  // подсчёт итогов
   let totalSale = 0,
     totalCost = 0;
   const preparedItems = items.map((it) => {
@@ -129,16 +129,11 @@ app.post("/api/orders", (req, res) => {
     const lineCost = qty * cost;
     totalSale += lineSale;
     totalCost += lineCost;
-    return {
-      ...it,
-      line_sale: lineSale,
-      line_cost: lineCost,
-    };
+    return { ...it, line_sale: lineSale, line_cost: lineCost };
   });
 
   const totalSaleAfterDisc =
-    totalSale * (1 - Number(discount_percent || 0) / 100) +
-    Number(extra_costs || 0);
+    totalSale * (1 - Number(discount_percent || 0) / 100) + Number(extra_costs || 0);
   const grossProfit = totalSaleAfterDisc - totalCost - Number(extra_costs || 0);
 
   generateOrderNumber((err, order_number) => {
@@ -197,12 +192,107 @@ app.post("/api/orders", (req, res) => {
   });
 });
 
-// отдать index.html
+// ОБНОВИТЬ заказ (полная замена позиций)
+app.put("/api/orders/:id", (req, res) => {
+  const orderId = Number(req.params.id);
+  const {
+    client,
+    status,
+    currency,
+    payment_terms,
+    planned_start,
+    planned_end,
+    actual_ship,
+    logistics,
+    discount_percent = 0,
+    extra_costs = 0,
+    items = [],
+  } = req.body;
+
+  // пересчёт итогов
+  let totalSale = 0,
+    totalCost = 0;
+  const preparedItems = items.map((it) => {
+    const qty = Number(it.quantity || 0);
+    const cost = Number(it.cost || 0);
+    const price = Number(it.price || 0);
+    const disc = Number(it.discount_percent || 0);
+    const lineSale = qty * price * (1 - disc / 100);
+    const lineCost = qty * cost;
+    totalSale += lineSale;
+    totalCost += lineCost;
+    return { ...it, line_sale: lineSale, line_cost: lineCost };
+  });
+
+  const totalSaleAfterDisc =
+    totalSale * (1 - Number(discount_percent || 0) / 100) + Number(extra_costs || 0);
+  const grossProfit = totalSaleAfterDisc - totalCost - Number(extra_costs || 0);
+
+  db.serialize(() => {
+    db.run(
+      `UPDATE orders SET
+        client=?, status=?, currency=?, payment_terms=?, planned_start=?, planned_end=?,
+        actual_ship=?, logistics=?, discount_percent=?, extra_costs=?,
+        total_sale=?, total_cost=?, gross_profit=?
+       WHERE id=?`,
+      [
+        client,
+        status,
+        currency,
+        payment_terms,
+        planned_start,
+        planned_end,
+        actual_ship,
+        logistics,
+        discount_percent,
+        extra_costs,
+        totalSaleAfterDisc,
+        totalCost,
+        grossProfit,
+        orderId,
+      ],
+      function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+
+        db.run(`DELETE FROM order_items WHERE order_id=?`, [orderId], function (err2) {
+          if (err2) return res.status(500).json({ error: err2.message });
+
+          const stmt = db.prepare(
+            `INSERT INTO order_items
+             (order_id, product, sku, color, size, quantity, cost, price, line_sale, line_cost, note)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          );
+          preparedItems.forEach((it) => {
+            stmt.run([
+              orderId,
+              it.product,
+              it.sku,
+              it.color,
+              it.size,
+              it.quantity,
+              it.cost,
+              it.price,
+              it.line_sale,
+              it.line_cost,
+              it.note || "",
+            ]);
+          });
+          stmt.finalize((err3) => {
+            if (err3) return res.status(500).json({ error: err3.message });
+            res.json({ success: true, order_id: orderId });
+          });
+        });
+      }
+    );
+  });
+});
+
+// index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// запуск
+// старт
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
   console.log(`Orders CRM running on http://localhost:${PORT}`)
