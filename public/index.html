@@ -3,64 +3,106 @@
 <head>
   <meta charset="UTF-8" />
   <title>Orders CRM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    th { background: #f2f2f2; }
-    .hidden { display: none; }
-    .btn { padding: 6px 12px; margin: 5px; background: #007bff; color: #fff; border: none; cursor: pointer; }
-    .btn:hover { background: #0056b3; }
-    .form-group { margin-bottom: 10px; }
-    label { display: block; font-weight: bold; }
-    input, select { width: 100%; padding: 6px; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; }
+    header { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .container { padding: 16px; max-width: 1100px; margin: 0 auto; }
+    .btn { padding: 10px 14px; border: 1px solid #ddd; border-radius: 10px; background: #fff; cursor: pointer; }
+    .btn.primary { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; vertical-align: top; }
+    .grid { display: grid; gap: 12px; }
+    .grid.cols2 { grid-template-columns: 1fr 1fr; }
+    .grid.cols3 { grid-template-columns: repeat(3, 1fr); }
+    input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; }
+    textarea { min-height: 60px; }
+    .card { border: 1px solid #eee; border-radius: 12px; padding: 16px; margin-top:12px; }
+    .muted { color: #666; font-size: 12px; }
+    .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; border:1px solid #eee; display:block; }
+    .photo-cell { display: flex; gap: 8px; align-items: center; }
+    .photo-actions { display:flex; flex-direction:column; gap:6px; }
   </style>
 </head>
 <body>
-  <h1>Orders CRM</h1>
+  <header>
+    <h3>Orders CRM</h3>
+    <button id="newBtn" class="btn primary" type="button">+ New Order</button>
+  </header>
 
-  <!-- список -->
-  <div id="listSection">
-    <button id="newBtn" class="btn">+ New Order</button>
-    <div id="orders"></div>
-  </div>
+  <div class="container">
+    <section id="listSection">
+      <h4>Orders</h4>
+      <div id="orders"></div>
+    </section>
 
-  <!-- форма -->
-  <div id="formSection" class="hidden">
-    <div class="form-group"><label>Client</label><input id="client" /></div>
-    <div class="form-group"><label>Status</label>
-      <select id="status">
-        <option>New</option><option>In Progress</option><option>Completed</option>
-      </select>
-    </div>
-    <div class="form-group"><label>Currency</label><input id="currency" value="CNY"/></div>
-    <div class="form-group"><label>Payment Terms</label><input id="payment_terms"/></div>
-    <div class="form-group"><label>Logistics</label><input id="logistics"/></div>
-    <div class="form-group"><label>Planned Start</label><input id="planned_start" type="date"/></div>
-    <div class="form-group"><label>Planned End</label><input id="planned_end" type="date"/></div>
-    <div class="form-group"><label>Actual Ship</label><input id="actual_ship" type="date"/></div>
-    <div class="form-group"><label>Discount %</label><input id="discount_percent" type="number" value="0"/></div>
-    <div class="form-group"><label>Extra Costs</label><input id="extra_costs" type="number" value="0"/></div>
+    <section id="formSection" style="display:none;">
+      <h4 id="formTitle">Create Order</h4>
 
-    <h3>Items</h3>
-    <table id="itemsTable">
-      <thead>
-        <tr>
-          <th>Product</th><th>SKU</th><th>Color</th><th>Size</th>
-          <th>Qty</th><th>Cost</th><th>Price</th><th>Disc%</th><th></th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button id="addItem" class="btn">+ Add Item</button><br/>
+      <div class="card">
+        <div class="grid cols3">
+          <div><label>Client</label><input id="client" /></div>
+          <div>
+            <label>Status</label>
+            <select id="status">
+              <option>New</option><option>In progress</option>
+              <option>Production</option><option>Shipped</option>
+              <option>Closed</option><option>Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <label>Currency</label>
+            <select id="currency"><option>CNY</option><option>USD</option><option>RUB</option><option>EUR</option></select>
+          </div>
+        </div>
+        <div class="grid cols2" style="margin-top:12px;">
+          <div><label>Payment Terms</label><input id="payment_terms" /></div>
+          <div><label>Logistics</label><input id="logistics" /></div>
+        </div>
+        <div class="grid cols3" style="margin-top:12px;">
+          <div><label>Planned start</label><input type="date" id="planned_start" /></div>
+          <div><label>Planned end</label><input type="date" id="planned_end" /></div>
+          <div><label>Actual ship</label><input type="date" id="actual_ship" /></div>
+        </div>
+        <div class="grid cols3" style="margin-top:12px;">
+          <div><label>Order Discount %</label><input id="discount_percent" type="number" value="0" /></div>
+          <div><label>Extra Costs</label><input id="extra_costs" type="number" value="0" /></div>
+          <div>
+            <label>WeDrive folder (URL)</label>
+            <input id="wedrive_folder" placeholder="paste folder link here" />
+            <div class="muted">Ссылка на папку в WeDrive (LONGWAY ➜ Orders ➜ …)</div>
+          </div>
+        </div>
+      </div>
 
-    <button id="saveBtn" class="btn">Save Order</button>
-    <button id="cancelBtn" class="btn" style="background:#6c757d">Cancel</button>
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0;">Items</h4>
+          <button class="btn" id="addItem" type="button">+ Add item</button>
+        </div>
+        <table id="itemsTable">
+          <thead>
+            <tr>
+              <th>Product</th><th>SKU</th><th>Color</th><th>Size</th>
+              <th>Qty</th><th>Cost</th><th>Price</th><th>Disc %</th>
+              <th>Photo</th><th>Note</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="muted">Фото хранится в Note как <code>img:/uploads/...</code>. При открытии заказа CRM сама показывает превью.</div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn" id="cancelBtn" type="button">Cancel</button>
+        <button class="btn primary" id="saveBtn" type="button">Save Order</button>
+        <a id="openWeDrive" class="btn" target="_blank" style="margin-left:8px; display:none;">📂 Open WeDrive</a>
+      </div>
+    </section>
   </div>
 
   <script>
-    // --- состояние
-    let editingId = null; // если null — создаём новый, если число — редактируем существующий
+    let editingId = null;
 
     const listSection = document.getElementById('listSection');
     const formSection = document.getElementById('formSection');
@@ -70,9 +112,45 @@
     const saveBtn = document.getElementById('saveBtn');
     const addItemBtn = document.getElementById('addItem');
     const itemsTbody = document.querySelector('#itemsTable tbody');
+    const wedriveInput = document.getElementById('wedrive_folder');
+    const openWeDrive = document.getElementById('openWeDrive');
+    const formTitle = document.getElementById('formTitle');
+
+    function extractImgFromNote(note='') {
+      const m = note.match(/(?:^|\s)img:([^\s]+)/i);
+      return m ? m[1] : '';
+    }
+    function putImgIntoNote(note='', url='') {
+      const trimmed = (note||'').trim();
+      if (!url) return trimmed.replace(/(?:^|\s)img:[^\s]+/i, '').trim();
+      if (/img:[^\s]+/i.test(trimmed)) return trimmed.replace(/img:[^\s]+/i, 'img:'+url).trim();
+      return (trimmed + (trimmed ? ' ' : '') + 'img:'+url).trim();
+    }
+
+    function makePhotoCell(initialUrl='') {
+      const cell = document.createElement('div');
+      cell.className = 'photo-cell';
+      if (initialUrl) cell.dataset.photoUrl = initialUrl;
+
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.alt = 'photo';
+      img.style.display = initialUrl ? 'block' : 'none';
+      if (initialUrl) img.src = initialUrl;
+
+      const actions = document.createElement('div'); actions.className = 'photo-actions';
+      const file = document.createElement('input'); file.type = 'file'; file.accept = 'image/*';
+      const up = document.createElement('button'); up.type='button'; up.className='btn upload-btn'; up.textContent='Upload photo';
+      const rm = document.createElement('button'); rm.type='button'; rm.className='btn remove-btn'; rm.textContent='Remove';
+
+      actions.append(file, up, rm);
+      cell.append(img, actions);
+      return cell;
+    }
 
     function row(item={}) {
       const tr = document.createElement('tr');
+      const photoFromNote = extractImgFromNote(item.note || '');
       tr.innerHTML = `
         <td><input value="${item.product||''}"/></td>
         <td><input value="${item.sku||''}"/></td>
@@ -82,11 +160,58 @@
         <td><input type="number" min="0" value="${item.cost||0}"/></td>
         <td><input type="number" min="0" value="${item.price||0}"/></td>
         <td><input type="number" min="0" value="${item.discount_percent||0}"/></td>
-        <td><button class="btn">×</button></td>
+        <td class="photo-td"></td>
+        <td><textarea>${item.note||''}</textarea></td>
+        <td><button class="btn del-row" type="button">×</button></td>
       `;
-      tr.querySelector('button').onclick = () => tr.remove();
+      tr.querySelector('.del-row').onclick = () => tr.remove();
+      const ptd = tr.querySelector('.photo-td');
+      ptd.appendChild(makePhotoCell(photoFromNote));
       return tr;
     }
+
+    // === Делегирование событий для фото ===
+    document.addEventListener('click', async (e) => {
+      // upload
+      if (e.target.classList.contains('upload-btn')) {
+        const cell = e.target.closest('.photo-cell');
+        const fileInput = cell.querySelector('input[type=file]');
+        const img = cell.querySelector('img.thumb');
+        if (!fileInput.files || !fileInput.files[0]) { alert('Choose an image'); return; }
+
+        const fd = new FormData();
+        fd.append('file', fileInput.files[0]);
+        try {
+          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+          const data = await res.json().catch(()=> ({}));
+          if (res.ok && data.url) {
+            cell.dataset.photoUrl = data.url;
+            img.src = data.url;
+            img.style.display = 'block';
+            const tr = e.target.closest('tr');
+            const noteEl = tr.querySelector('td:nth-child(10) textarea');
+            noteEl.value = putImgIntoNote(noteEl.value || '', data.url);
+            alert('Uploaded');
+          } else {
+            alert('Upload failed: ' + (data?.error || res.status));
+          }
+        } catch(err) {
+          alert('Upload error: ' + (err?.message || err));
+        }
+      }
+
+      // remove
+      if (e.target.classList.contains('remove-btn')) {
+        const cell = e.target.closest('.photo-cell');
+        const img = cell.querySelector('img.thumb');
+        const file = cell.querySelector('input[type=file]');
+        const tr = e.target.closest('tr');
+        const noteEl = tr.querySelector('td:nth-child(10) textarea');
+        noteEl.value = putImgIntoNote(noteEl.value || '', ''); // убрать img:
+        img.src = ''; img.style.display = 'none'; file.value = '';
+        delete cell.dataset.photoUrl;
+      }
+    });
 
     function getFormPayload() {
       return {
@@ -100,8 +225,13 @@
         actual_ship: document.getElementById('actual_ship').value,
         discount_percent: Number(document.getElementById('discount_percent').value||0),
         extra_costs: Number(document.getElementById('extra_costs').value||0),
+        wedrive_folder: wedriveInput.value.trim(),
         items: Array.from(itemsTbody.querySelectorAll('tr')).map(tr=>{
           const tds = tr.querySelectorAll('td');
+          const noteEl = tds[9].querySelector('textarea');
+          const noteOld = noteEl.value || '';
+          const photoUrl = tds[8].querySelector('.photo-cell')?.dataset?.photoUrl || '';
+          const noteWithImg = putImgIntoNote(noteOld, photoUrl);
           return {
             product: tds[0].querySelector('input').value,
             sku: tds[1].querySelector('input').value,
@@ -111,6 +241,7 @@
             cost: Number(tds[5].querySelector('input').value||0),
             price: Number(tds[6].querySelector('input').value||0),
             discount_percent: Number(tds[7].querySelector('input').value||0),
+            note: noteWithImg
           }
         })
       };
@@ -118,6 +249,7 @@
 
     function clearForm() {
       editingId = null;
+      formTitle.textContent = 'Create Order';
       document.getElementById('client').value = '';
       document.getElementById('status').value = 'New';
       document.getElementById('currency').value = 'CNY';
@@ -128,12 +260,15 @@
       document.getElementById('actual_ship').value = '';
       document.getElementById('discount_percent').value = '0';
       document.getElementById('extra_costs').value = '0';
+      wedriveInput.value = '';
+      openWeDrive.style.display = 'none';
       itemsTbody.innerHTML = '';
       saveBtn.textContent = 'Save Order';
     }
 
     function fillForm(order) {
       editingId = order.id;
+      formTitle.textContent = `Edit Order ${order.order_number}`;
       document.getElementById('client').value = order.client || '';
       document.getElementById('status').value = order.status || 'New';
       document.getElementById('currency').value = order.currency || 'CNY';
@@ -144,6 +279,11 @@
       document.getElementById('actual_ship').value = order.actual_ship || '';
       document.getElementById('discount_percent').value = order.discount_percent ?? 0;
       document.getElementById('extra_costs').value = order.extra_costs ?? 0;
+
+      wedriveInput.value = order.wedrive_folder || '';
+      if (wedriveInput.value) { openWeDrive.href = wedriveInput.value; openWeDrive.style.display = 'inline-block'; }
+      else { openWeDrive.style.display = 'none'; }
+
       itemsTbody.innerHTML = '';
       (order.items || []).forEach(it => itemsTbody.appendChild(row(it)));
       if ((order.items || []).length === 0) itemsTbody.appendChild(row());
@@ -172,7 +312,6 @@
         </table>
       `;
 
-      // клики по строкам — открыть на редактирование
       ordersDiv.querySelectorAll('tbody tr').forEach(tr => {
         tr.addEventListener('click', async () => {
           const id = tr.getAttribute('data-id');
@@ -190,22 +329,22 @@
       formSection.style.display = show ? 'block' : 'none';
     }
 
-    newBtn.onclick = () => { clearForm(); showForm(true); itemsTbody.innerHTML=''; addItemBtn.click(); };
+    newBtn.onclick = () => { clearForm(); showForm(true); itemsTbody.innerHTML=''; itemsTbody.appendChild(row()); };
     cancelBtn.onclick = () => { clearForm(); showForm(false); };
 
-    addItemBtn.onclick = () => itemsTbody.appendChild(row());
+    wedriveInput.addEventListener('input', () => {
+      const v = wedriveInput.value.trim();
+      if (v) { openWeDrive.href = v; openWeDrive.style.display = 'inline-block'; }
+      else { openWeDrive.style.display = 'none'; }
+    });
 
     saveBtn.onclick = async () => {
       const payload = getFormPayload();
-
-      // если редактируем — PUT, если создаём — POST
       const url = editingId ? `/api/orders/${editingId}` : '/api/orders';
       const method = editingId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
-        method,
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
+        method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
       });
 
       if (res.ok) {
@@ -219,7 +358,6 @@
       }
     };
 
-    // первичная загрузка
     loadOrders();
   </script>
 </body>
