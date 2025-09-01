@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orders CRM</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; }
+    header { padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .container { padding: 16px; max-width: 960px; margin: 0 auto; }
+    .btn { padding: 10px 14px; border: 1px solid #ddd; border-radius: 10px; background: #fff; cursor: pointer; }
+    .btn.primary { background: #0ea5e9; color: #fff; border-color: #0ea5e9; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+    .grid { display: grid; gap: 12px; }
+    .grid.cols2 { grid-template-columns: 1fr 1fr; }
+    .grid.cols3 { grid-template-columns: repeat(3, 1fr); }
+    input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; }
+    .card { border: 1px solid #eee; border-radius: 12px; padding: 16px; }
+    .items { margin-top: 8px; }
+    .muted { color: #666; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h3>Orders CRM</h3>
+    <button id="newBtn" class="btn primary">+ New Order</button>
+  </header>
+
+  <div class="container">
+    <section id="listSection">
+      <h4>Orders</h4>
+      <div id="orders"></div>
+    </section>
+
+    <section id="formSection" style="display:none;">
+      <h4>Create Order</h4>
+      <div class="card">
+        <div class="grid cols3">
+          <div><label>Client</label><input id="client" /></div>
+          <div>
+            <label>Status</label>
+            <select id="status">
+              <option>New</option><option>In progress</option>
+              <option>Production</option><option>Shipped</option>
+              <option>Closed</option><option>Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <label>Currency</label>
+            <select id="currency"><option>CNY</option><option>USD</option><option>RUB</option><option>EUR</option></select>
+          </div>
+        </div>
+        <div class="grid cols2" style="margin-top:12px;">
+          <div><label>Payment Terms</label><input id="payment_terms" placeholder="60% prepayment, 40% before shipment" /></div>
+          <div><label>Logistics</label><input id="logistics" placeholder="FOB Shanghai / DAP Moscow, tracking..." /></div>
+        </div>
+        <div class="grid cols3" style="margin-top:12px;">
+          <div><label>Planned start</label><input type="date" id="planned_start" /></div>
+          <div><label>Planned end</label><input type="date" id="planned_end" /></div>
+          <div><label>Actual ship</label><input type="date" id="actual_ship" /></div>
+        </div>
+        <div class="grid cols3" style="margin-top:12px;">
+          <div><label>Order Discount %</label><input id="discount_percent" type="number" value="0" /></div>
+          <div><label>Extra Costs</label><input id="extra_costs" type="number" value="0" /></div>
+        </div>
+      </div>
+
+      <div class="card items">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0;">Items</h4>
+          <button class="btn" id="addItem">+ Add item</button>
+        </div>
+        <table id="itemsTable">
+          <thead>
+            <tr>
+              <th>Product</th><th>SKU</th><th>Color</th><th>Size</th>
+              <th>Qty</th><th>Cost</th><th>Price</th><th>Disc %</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="muted">Totals auto-calculate on submit.</div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn" id="cancelBtn">Cancel</button>
+        <button class="btn primary" id="saveBtn">Save Order</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const listSection = document.getElementById('listSection');
+    const formSection = document.getElementById('formSection');
+    const ordersDiv = document.getElementById('orders');
+    const newBtn = document.getElementById('newBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const addItemBtn = document.getElementById('addItem');
+    const itemsTbody = document.querySelector('#itemsTable tbody');
+
+    function row(item={}) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input value="${item.product||''}"/></td>
+        <td><input value="${item.sku||''}"/></td>
+        <td><input value="${item.color||''}"/></td>
+        <td><input value="${item.size||''}"/></td>
+        <td><input type="number" min="0" value="${item.quantity||0}"/></td>
+        <td><input type="number" min="0" value="${item.cost||0}"/></td>
+        <td><input type="number" min="0" value="${item.price||0}"/></td>
+        <td><input type="number" min="0" value="${item.discount_percent||0}"/></td>
+        <td><button class="btn">×</button></td>
+      `;
+      tr.querySelector('button').onclick = () => tr.remove();
+      return tr;
+    }
+
+    async function loadOrders() {
+      const res = await fetch('/api/orders');
+      const data = await res.json();
+      ordersDiv.innerHTML = `
+        <table>
+          <thead><tr><th>#</th><th>Client</th><th>Status</th><th>Currency</th><th>Total</th><th>GP</th><th>Date</th></tr></thead>
+          <tbody>
+            ${data.map(o => `
+              <tr>
+                <td>${o.order_number}</td>
+                <td>${o.client||''}</td>
+                <td>${o.status||''}</td>
+                <td>${o.currency||''}</td>
+                <td>${(o.total_sale||0).toFixed(2)}</td>
+                <td>${(o.gross_profit||0).toFixed(2)}</td>
+                <td>${new Date(o.created_at).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function showForm(show) {
+      listSection.style.display = show ? 'none' : 'block';
+      formSection.style.display = show ? 'block' : 'none';
+    }
+
+    newBtn.onclick = () => { showForm(true); itemsTbody.innerHTML=''; addItemBtn.click(); };
+    cancelBtn.onclick = () => showForm(false);
+    addItemBtn.onclick = () => itemsTbody.appendChild(row());
+
+    saveBtn.onclick = async () => {
+      const payload = {
+        client: document.getElementById('client').value,
+        status: document.getElementById('status').value,
+        currency: document.getElementById('currency').value,
+        payment_terms: document.getElementById('payment_terms').value,
+        logistics: document.getElementById('logistics').value,
+        planned_start: document.getElementById('planned_start').value,
+        planned_end: document.getElementById('planned_end').value,
+        actual_ship: document.getElementById('actual_ship').value,
+        discount_percent: Number(document.getElementById('discount_percent').value||0),
+        extra_costs: Number(document.getElementById('extra_costs').value||0),
+        items: Array.from(itemsTbody.querySelectorAll('tr')).map(tr=>{
+          const tds = tr.querySelectorAll('td');
+          return {
+            product: tds[0].querySelector('input').value,
+            sku: tds[1].querySelector('input').value,
+            color: tds[2].querySelector('input').value,
+            size: tds[3].querySelector('input').value,
+            quantity: Number(tds[4].querySelector('input').value||0),
+            cost: Number(tds[5].querySelector('input').value||0),
+            price: Number(tds[6].querySelector('input').value||0),
+            discount_percent: Number(tds[7].querySelector('input').value||0),
+          }
+        })
+      };
+      const res = await fetch('/api/orders', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showForm(false);
+        await loadOrders();
+        alert('Order saved');
+      } else {
+        alert('Error saving order');
+      }
+    };
+
+    loadOrders();
+  </script>
+</body>
+</html>
